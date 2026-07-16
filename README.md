@@ -36,7 +36,22 @@ assets/
   messages/              司書メッセージ JSON
 ```
 
-## 物語の追加方法
+## 物語の追加方法 (プレーンテキストから変換・推奨)
+
+JSON を手で書くと `\n` エスケープなどが面倒なので、プレーンテキストで書いて
+自動変換するツールを使う。
+
+1. `tool/story_template.txt` をコピーして `assets/stories_src/<id>.txt` を作成し、本文を書く
+   (書式は `tool/story_template.txt` 内のコメント兼サンプルを参照。ページは `#PAGE#` の行で区切るだけでよく、
+   改行や空行(段落区切り)はそのまま反映される)
+2. 変換コマンドを実行:
+   ```powershell
+   cd kotonoha
+   dart run tool/story_from_txt.dart assets/stories_src/<id>.txt
+   ```
+3. `assets/stories/<id>.json` が生成され、`index.json` にも自動追記される
+
+## 物語の追加方法 (JSON を直接書く場合)
 
 1. `assets/stories/` に JSON ファイルを追加 (例: `taketori_01.json`)
 2. `assets/stories/index.json` の `stories` 配列にファイル名を追記

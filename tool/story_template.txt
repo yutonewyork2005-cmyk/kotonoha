@@ -1,0 +1,40 @@
+id: story_id_here
+title: リメイク版タイトル
+original_title: 原作タイトル
+author: 原作者
+tag: 古文
+is_series: false
+series_name:
+series_num:
+series_next:
+
+#PAGES
+1ページ目の本文をここに書く。
+改行はそのまま改行として反映される。
+
+空行を入れると段落が分かれる。
+#PAGE#
+2ページ目の本文。
+#PAGE#
+3ページ目の本文。
+
+#TRIVIA
+豆知識1
+豆知識2
+豆知識3
+
+#QUIZ
+Q: 問題文をここに
+1: 選択肢1
+2: 選択肢2
+3: 選択肢3
+4: 選択肢4
+ANSWER: 2
+EXPLANATION: 解説(省略可)
+
+Q: 2問目の問題文
+1: 選択肢1
+2: 選択肢2
+3: 選択肢3
+4: 選択肢4
+ANSWER: 1
