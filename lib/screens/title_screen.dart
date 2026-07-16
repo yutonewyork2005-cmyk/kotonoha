@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../models/rewards.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import '../services/librarian_service.dart';
 import '../services/story_repository.dart';
 import '../services/user_service.dart';
-import '../widgets/librarian_avatar.dart';
 import 'customize_screen.dart';
 import 'reading_screen.dart';
 import 'story_list_screen.dart';
 
 /// タイトル画面。読書・司書メッセージ・きせかえへの入口。
+/// 背景イラスト(assets/images/title_bg.png)の上に実際のUIを重ねて配置する。
 class TitleScreen extends StatefulWidget {
   const TitleScreen({super.key});
 
@@ -20,7 +19,10 @@ class TitleScreen extends StatefulWidget {
 }
 
 class _TitleScreenState extends State<TitleScreen> {
-  String? _librarianMessage;
+  static const double _bgAspectRatio = 918 / 1257;
+  static const _textColor = Color(0xFF4A3B6B);
+  static const _borderColor = Color(0xFF8A6A3B);
+
   bool _creatingProfile = false;
 
   Future<void> _onLibrarianTap(UserProfile profile) async {
@@ -28,7 +30,16 @@ class _TitleScreenState extends State<TitleScreen> {
       memberSince: profile.createdAt,
       totalReadCount: profile.totalReadCount,
     );
-    if (mounted) setState(() => _librarianMessage = message);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
   }
 
   Future<void> _readRandom() async {
@@ -56,6 +67,66 @@ class _TitleScreenState extends State<TitleScreen> {
     }
   }
 
+  Widget _positioned(
+    BoxConstraints c, {
+    required double left,
+    required double top,
+    required double width,
+    required double height,
+    required Widget child,
+  }) {
+    return Positioned(
+      left: left * c.maxWidth,
+      top: top * c.maxHeight,
+      width: width * c.maxWidth,
+      height: height * c.maxHeight,
+      child: child,
+    );
+  }
+
+  Widget _shelfButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: const Color(0xFFEBD6C5),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),
+        side: const BorderSide(color: _borderColor, width: 2),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: _textColor, size: 22),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(
+                    color: _textColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.arrow_forward, color: _textColor, size: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
@@ -77,115 +148,139 @@ class _TitleScreenState extends State<TitleScreen> {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        final bg = RewardCatalog.backgroundById(profile.equippedBgId);
-        final costume = RewardCatalog.costumeById(profile.equippedCostumeId);
-        final darkBg = bg.colors.first.computeLuminance() < 0.4;
-        final textColor = darkBg ? Colors.white : const Color(0xFF3A2A1A);
 
         return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: bg.colors,
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          backgroundColor: const Color(0xFF241C3A),
+          body: SafeArea(
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: _bgAspectRatio,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return Stack(
                       children: [
-                        Chip(
-                          avatar: const Icon(Icons.auto_stories, size: 18),
-                          label: Text('読了 ${profile.totalReadCount}冊'),
+                        Positioned.fill(
+                          child: Image.asset(
+                            'assets/images/title_bg.png',
+                            fit: BoxFit.fill,
+                          ),
                         ),
-                        IconButton(
-                          tooltip: 'ログアウト',
-                          onPressed: () => AuthService.instance.signOut(),
-                          icon: Icon(Icons.logout, color: textColor),
+                        // 司書タップ領域 (イラスト部分)
+                        _positioned(
+                          constraints,
+                          left: 0.457,
+                          top: 0.358,
+                          width: 0.543,
+                          height: 0.642,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _onLibrarianTap(profile),
+                              splashColor: Colors.white24,
+                            ),
+                          ),
+                        ),
+                        // 読了数チップ
+                        _positioned(
+                          constraints,
+                          left: 0.03,
+                          top: 0.02,
+                          width: 0.32,
+                          height: 0.05,
+                          child: Chip(
+                            avatar: const Icon(Icons.auto_stories, size: 16),
+                            label: Text('読了 ${profile.totalReadCount}冊'),
+                            backgroundColor: const Color(0xFFEBD6C5),
+                          ),
+                        ),
+                        // きせかえ / ログアウト
+                        _positioned(
+                          constraints,
+                          left: 0.78,
+                          top: 0.015,
+                          width: 0.2,
+                          height: 0.055,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              _iconButton(
+                                icon: Icons.palette,
+                                tooltip: 'きせかえ',
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const CustomizeScreen(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              _iconButton(
+                                icon: Icons.logout,
+                                tooltip: 'ログアウト',
+                                onTap: () => AuthService.instance.signOut(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 本棚へ (物語一覧)
+                        _positioned(
+                          constraints,
+                          left: 0.659,
+                          top: 0.768,
+                          width: 0.341,
+                          height: 0.0796,
+                          child: _shelfButton(
+                            icon: Icons.menu_book,
+                            label: '本棚へ',
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const StoryListScreen(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // 今日の一話 (ランダム)
+                        _positioned(
+                          constraints,
+                          left: 0.643,
+                          top: 0.851,
+                          width: 0.357,
+                          height: 0.0875,
+                          child: _shelfButton(
+                            icon: Icons.casino,
+                            label: '今日の一話',
+                            onTap: _readRandom,
+                          ),
                         ),
                       ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      'ことのは文庫',
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'serif',
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    if (_librarianMessage != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.92),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _librarianMessage!,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      )
-                    else
-                      Text(
-                        '司書をタップしてみましょう',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textColor.withOpacity(0.7),
-                        ),
-                      ),
-                    const SizedBox(height: 8),
-                    LibrarianAvatar(
-                      costume: costume,
-                      onTap: () => _onLibrarianTap(profile),
-                    ),
-                    const Spacer(),
-                    FilledButton.icon(
-                      icon: const Icon(Icons.menu_book),
-                      label: const Text('本をえらぶ'),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const StoryListScreen(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.tonalIcon(
-                      icon: const Icon(Icons.casino),
-                      label: const Text('ランダムに読む'),
-                      onPressed: _readRandom,
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      icon: Icon(Icons.palette, color: textColor),
-                      label: Text(
-                        'きせかえ',
-                        style: TextStyle(color: textColor),
-                      ),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CustomizeScreen(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _iconButton({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: const Color(0xFFEBD6C5).withValues(alpha: 0.9),
+      shape: const CircleBorder(
+        side: BorderSide(color: _borderColor, width: 1.5),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(icon, color: _textColor, size: 18),
+        ),
+      ),
     );
   }
 }
