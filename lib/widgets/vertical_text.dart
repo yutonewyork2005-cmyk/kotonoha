@@ -78,6 +78,7 @@ class VerticalPageView extends StatelessWidget {
 
   static const _rotateChars = {
     'ー', '−', '-', '~', '〜', // 長音・波ダッシュ
+    '…', '‥', // 三点リーダー・二点リーダー
     '(', ')', '（', '）', // 半角・全角括弧
     '「', '」', '『', '』', '【', '】', '〈', '〉', '《', '》', '[', ']',
   };
