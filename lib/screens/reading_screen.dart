@@ -7,7 +7,8 @@ import '../services/user_service.dart';
 import '../widgets/vertical_text.dart';
 import 'finished_screen.dart';
 
-/// 読書画面。左スワイプでページをめくり、最終ページの先に読了ボタンが出る。
+/// 読書画面。右から左へスワイプしてページをめくり(縦書きの本と同じ向き)、
+/// 最終ページの先に読了ボタンが出る。
 class ReadingScreen extends StatefulWidget {
   const ReadingScreen({super.key, required this.story});
 
@@ -18,6 +19,11 @@ class ReadingScreen extends StatefulWidget {
 }
 
 class _ReadingScreenState extends State<ReadingScreen> {
+  static const _cellSize = 42.0;
+  static const _contentPadding = EdgeInsets.fromLTRB(16, 16, 16, 16);
+  static const _footerHeight = 40.0;
+  static const _textStyle = TextStyle(fontSize: 24, fontFamily: 'serif');
+
   final _controller = PageController();
   int _page = 0;
   bool _finishing = false;
@@ -55,7 +61,6 @@ class _ReadingScreenState extends State<ReadingScreen> {
   @override
   Widget build(BuildContext context) {
     final story = widget.story;
-    final pageCount = story.pages.length;
     return Scaffold(
       backgroundColor: const Color(0xFFFDF9F0),
       appBar: AppBar(
@@ -78,70 +83,90 @@ class _ReadingScreenState extends State<ReadingScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: PageView.builder(
-              controller: _controller,
-              itemCount: pageCount + 1,
-              onPageChanged: (i) => setState(() => _page = i),
-              itemBuilder: (context, i) {
-                if (i == pageCount) {
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          'おしまい',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontFamily: 'serif',
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final viewport = Size(
+              constraints.maxWidth - _contentPadding.horizontal,
+              constraints.maxHeight - _footerHeight - _contentPadding.vertical,
+            );
+            final screens = <VerticalPage>[
+              for (final pageText in story.pages)
+                ...VerticalTextPaginator.paginate(
+                  text: pageText,
+                  cellSize: _cellSize,
+                  viewportSize: viewport,
+                ),
+            ];
+            final screenCount = screens.length;
+            return Column(
+              children: [
+                Expanded(
+                  child: PageView.builder(
+                    controller: _controller,
+                    // 右から左へスワイプすると次のページに進む(縦書きの本と同じ向き)。
+                    reverse: true,
+                    itemCount: screenCount + 1,
+                    onPageChanged: (i) => setState(() => _page = i),
+                    itemBuilder: (context, i) {
+                      if (i == screenCount) {
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'おしまい',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontFamily: 'serif',
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              SizedBox(
+                                width: 220,
+                                child: FilledButton(
+                                  onPressed: _finishing ? null : _finish,
+                                  child: _finishing
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text('読み終わった!'),
+                                ),
+                              ),
+                            ],
                           ),
+                        );
+                      }
+                      return Padding(
+                        padding: _contentPadding,
+                        child: VerticalPageView(
+                          page: screens[i],
+                          style: _textStyle,
+                          cellSize: _cellSize,
                         ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: 220,
-                          child: FilledButton(
-                            onPressed: _finishing ? null : _finish,
-                            child: _finishing
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('読み終わった!'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
-                  child: VerticalText(
-                    text: story.pages[i],
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'serif',
+                      );
+                    },
+                  ),
+                ),
+                SizedBox(
+                  height: _footerHeight,
+                  child: Center(
+                    child: Text(
+                      _page < screenCount
+                          ? '${_page + 1} / $screenCount'
+                          : '読了',
+                      style: TextStyle(color: Colors.brown.shade400),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                _page < pageCount ? '${_page + 1} / $pageCount' : '読了',
-                style: TextStyle(color: Colors.brown.shade400),
-              ),
-            ),
-          ),
-        ],
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

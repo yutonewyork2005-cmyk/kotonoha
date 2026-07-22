@@ -2,105 +2,121 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// 物語本文を縦書き(右から左へ、上から下へ)で表示するウィジェット。
+/// 縦書きの1画面分のデータ。
 ///
-/// テキスト中の改行(\n)ごとに1列(右側から順)とし、空行は列間の余白として扱う。
-/// 長音記号や括弧など、縦書きで90度回転させたほうが自然な文字は回転させる。
-class VerticalText extends StatelessWidget {
-  const VerticalText({
+/// [columns] は表示順(左から右へ配置する順)で、index 0 が一番右
+/// (読み始めの位置)に来る。1列は上から下に読む文字のリスト。
+/// 空リストの列は改行(段落区切り)のための余白列として扱う。
+class VerticalPage {
+  const VerticalPage(this.columns);
+  final List<List<String>> columns;
+}
+
+/// 物語本文を、指定した画面サイズにちょうど収まるよう縦書き用に分割する。
+///
+/// フォントサイズを画面ごとに変えず一定に保つため、1文字あたりの
+/// セルサイズ([cellSize])は固定し、代わりに収まりきらない分は
+/// 新しい画面(ページ)として分割する。
+class VerticalTextPaginator {
+  const VerticalTextPaginator._();
+
+  static List<VerticalPage> paginate({
+    required String text,
+    required double cellSize,
+    required Size viewportSize,
+  }) {
+    final maxRows = math.max(1, (viewportSize.height / cellSize).floor());
+
+    // まず改行(\n)ごとに列を作り、画面の高さに収まらない列は
+    // 続きを新しい列(この段階ではまだ同じ画面内)に折り返す。
+    final allColumns = <List<String>>[];
+    for (final line in text.split('\n')) {
+      if (line.trim().isEmpty) {
+        allColumns.add(const []);
+        continue;
+      }
+      final chars = line.runes.map(String.fromCharCode).toList();
+      for (var i = 0; i < chars.length; i += maxRows) {
+        allColumns.add(chars.sublist(i, math.min(i + maxRows, chars.length)));
+      }
+    }
+
+    // 画面の幅に収まる列数ごとに画面(ページ)を分割する。
+    final pages = <VerticalPage>[];
+    var current = <List<String>>[];
+    var widthUsed = 0.0;
+    for (final col in allColumns) {
+      final w = col.isEmpty ? cellSize * 0.6 : cellSize;
+      if (current.isNotEmpty && widthUsed + w > viewportSize.width) {
+        pages.add(VerticalPage(current.reversed.toList()));
+        current = [];
+        widthUsed = 0;
+      }
+      current.add(col);
+      widthUsed += w;
+    }
+    if (current.isNotEmpty) {
+      pages.add(VerticalPage(current.reversed.toList()));
+    }
+    if (pages.isEmpty) pages.add(const VerticalPage([]));
+    return pages;
+  }
+}
+
+/// 縦書きの1画面を表示するウィジェット。
+class VerticalPageView extends StatelessWidget {
+  const VerticalPageView({
     super.key,
-    required this.text,
+    required this.page,
     this.style,
-    this.columnWidth = 32,
+    this.cellSize = 42,
   });
 
-  final String text;
+  final VerticalPage page;
   final TextStyle? style;
-  final double columnWidth;
+  final double cellSize;
 
   static const _rotateChars = {
     'ー', '−', '-', '~', '〜', // 長音・波ダッシュ
     '(', ')', '「', '」', '『', '』', '【', '】', '〈', '〉', '《', '》', '[', ']',
   };
 
-  @override
-  Widget build(BuildContext context) {
-    const verticalPadding = 16.0;
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final usableHeight = constraints.maxHeight - verticalPadding;
-        final maxRows = usableHeight.isFinite
-            ? (usableHeight ~/ columnWidth).clamp(1, 1000)
-            : 1000;
-
-        final lines = text.split('\n');
-        final columns = <Widget>[];
-        for (final line in lines) {
-          if (line.trim().isEmpty) {
-            columns.add(SizedBox(width: columnWidth * 0.6));
-            continue;
-          }
-          final chars = line.runes.map(String.fromCharCode).toList();
-          // 画面に収まらない行は、続きを左隣の列に折り返す。
-          for (var i = 0; i < chars.length; i += maxRows) {
-            final chunk = chars.sublist(
-              i,
-              (i + maxRows).clamp(0, chars.length),
-            );
-            columns.add(
-              _VerticalColumn(chars: chunk, style: style, cell: columnWidth),
-            );
-          }
-        }
-        // 横スクロールにすると PageView のページめくりスワイプと競合するため、
-        // 列数が多いページは画面幅に収まるよう縮小して表示する(FittedBox)。
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: verticalPadding / 2),
-          child: FittedBox(
-            fit: BoxFit.contain,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              // 最初の行が右端(読み始めの位置)に来るよう逆順に並べる。
-              children: columns.reversed.toList(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _VerticalColumn extends StatelessWidget {
-  const _VerticalColumn({
-    required this.chars,
-    required this.style,
-    required this.cell,
-  });
-
-  final List<String> chars;
-  final TextStyle? style;
-  final double cell;
+  // 句読点は縦書きではセルの右上寄りに置くのが自然。
+  static const _leadingPunctuation = {'、', '。', ',', '.'};
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final ch in chars)
-          SizedBox(
-            width: cell,
-            height: cell,
-            child: Center(
-              child: VerticalText._rotateChars.contains(ch)
-                  ? Transform.rotate(
-                      angle: math.pi / 2,
-                      child: Text(ch, style: style),
-                    )
-                  : Text(ch, style: style),
+        for (final col in page.columns)
+          if (col.isEmpty)
+            SizedBox(width: cellSize * 0.6)
+          else
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final ch in col)
+                  SizedBox(
+                    width: cellSize,
+                    height: cellSize,
+                    child: _charCell(ch),
+                  ),
+              ],
             ),
-          ),
       ],
     );
+  }
+
+  Widget _charCell(String ch) {
+    Widget text = Text(ch, style: style);
+    if (_rotateChars.contains(ch)) {
+      text = Transform.rotate(angle: math.pi / 2, child: text);
+    }
+    if (_leadingPunctuation.contains(ch)) {
+      return Align(alignment: const Alignment(-0.55, -0.6), child: text);
+    }
+    return Center(child: text);
   }
 }
