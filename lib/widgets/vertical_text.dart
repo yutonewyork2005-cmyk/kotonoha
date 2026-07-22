@@ -78,7 +78,8 @@ class VerticalPageView extends StatelessWidget {
 
   static const _rotateChars = {
     'ー', '−', '-', '~', '〜', // 長音・波ダッシュ
-    '(', ')', '「', '」', '『', '』', '【', '】', '〈', '〉', '《', '》', '[', ']',
+    '(', ')', '（', '）', // 半角・全角括弧
+    '「', '」', '『', '』', '【', '】', '〈', '〉', '《', '》', '[', ']',
   };
 
   // 句読点は縦書きではセルの右上寄りに置くのが自然。
@@ -115,7 +116,7 @@ class VerticalPageView extends StatelessWidget {
       text = Transform.rotate(angle: math.pi / 2, child: text);
     }
     if (_leadingPunctuation.contains(ch)) {
-      return Align(alignment: const Alignment(-0.55, -0.6), child: text);
+      return Align(alignment: const Alignment(0.55, -0.6), child: text);
     }
     return Center(child: text);
   }
