@@ -4,6 +4,7 @@ import '../models/rewards.dart';
 import '../models/story.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../widgets/vertical_text.dart';
 import 'finished_screen.dart';
 
 /// 読書画面。左スワイプでページをめくり、最終ページの先に読了ボタンが出る。
@@ -117,13 +118,12 @@ class _ReadingScreenState extends State<ReadingScreen> {
                     ),
                   );
                 }
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                  child: Text(
-                    story.pages[i],
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 24),
+                  child: VerticalText(
+                    text: story.pages[i],
                     style: const TextStyle(
-                      fontSize: 17,
-                      height: 2.0,
+                      fontSize: 18,
                       fontFamily: 'serif',
                     ),
                   ),
