@@ -116,7 +116,14 @@ class VerticalPageView extends StatelessWidget {
       text = Transform.rotate(angle: math.pi / 2, child: text);
     }
     if (_leadingPunctuation.contains(ch)) {
-      return Align(alignment: const Alignment(0.55, -0.6), child: text);
+      // 、。はフォント内で左下寄りに描画されるため、Alignだけでは
+      // 効果が弱い。右上へ確実にずらすため中央配置後に平行移動する。
+      return Center(
+        child: Transform.translate(
+          offset: Offset(cellSize * 0.3, -cellSize * 0.3),
+          child: text,
+        ),
+      );
     }
     return Center(child: text);
   }

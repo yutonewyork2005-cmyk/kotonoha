@@ -19,10 +19,10 @@ class ReadingScreen extends StatefulWidget {
 }
 
 class _ReadingScreenState extends State<ReadingScreen> {
-  static const _cellSize = 42.0;
+  static const _cellSize = 38.0;
   static const _contentPadding = EdgeInsets.fromLTRB(16, 16, 16, 16);
   static const _footerHeight = 40.0;
-  static const _textStyle = TextStyle(fontSize: 24, fontFamily: 'serif');
+  static const _textStyle = TextStyle(fontSize: 21, fontFamily: 'serif');
 
   final _controller = PageController();
   int _page = 0;
@@ -90,14 +90,15 @@ class _ReadingScreenState extends State<ReadingScreen> {
               constraints.maxWidth - _contentPadding.horizontal,
               constraints.maxHeight - _footerHeight - _contentPadding.vertical,
             );
-            final screens = <VerticalPage>[
-              for (final pageText in story.pages)
-                ...VerticalTextPaginator.paginate(
-                  text: pageText,
-                  cellSize: _cellSize,
-                  viewportSize: viewport,
-                ),
-            ];
+            // 元のページ区切り(横書き時代の目安)ごとに分割し直すと、
+            // 各ページの末尾で余った分だけの画面ができ不自然な余白が
+            // 生まれるため、物語全体を1本の文章としてつなげてから
+            // 画面サイズに合わせて縦書き用に分割し直す。
+            final screens = VerticalTextPaginator.paginate(
+              text: story.pages.join('\n\n'),
+              cellSize: _cellSize,
+              viewportSize: viewport,
+            );
             final screenCount = screens.length;
             return Column(
               children: [
