@@ -12,48 +12,85 @@ class VerticalPage {
   final List<List<String>> columns;
 }
 
-/// 物語本文を、指定した画面サイズにちょうど収まるよう縦書き用に分割する。
+/// 物語本文を、本の組版に近いルールで縦書きページに分割する。
 ///
-/// フォントサイズを画面ごとに変えず一定に保つため、1文字あたりの
-/// セルサイズ([cellSize])は固定し、代わりに収まりきらない分は
-/// 新しい画面(ページ)として分割する。
+/// - 1列(縦1行)は約 [rowsPerColumn] 文字
+/// - 1ページは約 [columnsPerPage] 列
+/// - 段落頭は全角空白で字下げ(かぎ括弧などで始まる行を除く)
+/// - 句読点や閉じ括弧が行頭に来る場合は前の行末にぶら下げる(行頭禁則)
 class VerticalTextPaginator {
   const VerticalTextPaginator._();
 
-  static List<VerticalPage> paginate({
-    required String text,
-    required double cellSize,
-    required Size viewportSize,
-  }) {
-    final maxRows = math.max(1, (viewportSize.height / cellSize).floor());
+  /// 1列(縦1行)あたりの文字数の目安。
+  static const rowsPerColumn = 31;
 
-    // まず改行(\n)ごとに列を作り、画面の高さに収まらない列は
-    // 続きを新しい列(この段階ではまだ同じ画面内)に折り返す。
+  /// 行頭禁則のぶら下げで1列に追加してよい文字数。
+  static const maxHangingChars = 2;
+
+  /// 1ページあたりの列数の目安。
+  static const columnsPerPage = 10;
+
+  /// 字下げしない行頭文字(会話文・引用など)。
+  static const _openingBrackets = {
+    '「', '『', '（', '(', '【', '〈', '《', '[',
+  };
+
+  /// 行頭に来ると不自然な文字(行頭禁則)。前の列末尾にぶら下げる。
+  static const _lineHeadForbidden = {
+    '、', '。', '，', '．', ',', '.',
+    '」', '』', '）', ')', '】', '〉', '》', ']',
+    '？', '?', '！', '!', '…', '‥',
+  };
+
+  static List<VerticalPage> paginate({required String text}) {
+    // 段落(改行区切り)ごとに、字下げ→31文字ずつ列に折り返し。
     final allColumns = <List<String>>[];
     for (final line in text.split('\n')) {
-      if (line.trim().isEmpty) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
         allColumns.add(const []);
         continue;
       }
-      final chars = line.runes.map(String.fromCharCode).toList();
-      for (var i = 0; i < chars.length; i += maxRows) {
-        allColumns.add(chars.sublist(i, math.min(i + maxRows, chars.length)));
+      final chars = trimmed.runes.map(String.fromCharCode).toList();
+      if (!_openingBrackets.contains(chars.first) && chars.first != '　') {
+        chars.insert(0, '　');
+      }
+      var i = 0;
+      while (i < chars.length) {
+        var end = math.min(i + rowsPerColumn, chars.length);
+        // 次の列の頭が句読点等になるなら、この列の末尾にぶら下げる。
+        var hung = 0;
+        while (end < chars.length &&
+            hung < maxHangingChars &&
+            _lineHeadForbidden.contains(chars[end])) {
+          end++;
+          hung++;
+        }
+        allColumns.add(chars.sublist(i, end));
+        i = end;
       }
     }
 
-    // 画面の幅に収まる列数ごとに画面(ページ)を分割する。
+    // 約10列ごとにページへまとめる。空白列(段落区切り)はページ頭・末尾に
+    // 残さない。
     final pages = <VerticalPage>[];
     var current = <List<String>>[];
-    var widthUsed = 0.0;
+    var contentCount = 0;
     for (final col in allColumns) {
-      final w = col.isEmpty ? cellSize * 0.6 : cellSize;
-      if (current.isNotEmpty && widthUsed + w > viewportSize.width) {
+      if (col.isEmpty && current.isEmpty) continue;
+      if (col.isNotEmpty && contentCount >= columnsPerPage) {
+        while (current.isNotEmpty && current.last.isEmpty) {
+          current.removeLast();
+        }
         pages.add(VerticalPage(current.reversed.toList()));
         current = [];
-        widthUsed = 0;
+        contentCount = 0;
       }
       current.add(col);
-      widthUsed += w;
+      if (col.isNotEmpty) contentCount++;
+    }
+    while (current.isNotEmpty && current.last.isEmpty) {
+      current.removeLast();
     }
     if (current.isNotEmpty) {
       pages.add(VerticalPage(current.reversed.toList()));
