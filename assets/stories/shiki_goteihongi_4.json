@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_4",
+  "title": "史記・五帝本紀 4 堯帝の娘、娥皇",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 4,
+  "series_next": "shiki_goteihongi_5",
+  "text_file": "shiki_goteihongi_4.txt",
+  "column": {
+    "trivia": [
+      "実は、娥皇には女英（じょえい）という妹がいました。『史記』では、娥皇と女英の二人とも舜に嫁ぎ、その後はともに良き妻として舜を支えたと伝えられています。"
+    ],
+    "quiz": []
+  }
+}

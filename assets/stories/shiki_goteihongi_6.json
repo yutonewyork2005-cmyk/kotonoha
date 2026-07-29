@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_6",
+  "title": "史記・五帝本紀 6 禅譲への道",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 6,
+  "series_next": "shiki_goteihongi_7",
+  "text_file": "shiki_goteihongi_6.txt",
+  "column": {
+    "trivia": [
+      "堯は自分の子ではなく、徳と能力を備えた舜を後継者に選びました。このように、血縁ではなく人物の資質を重視して位を譲ることを「禅譲（ぜんじょう）」といいます。\n\n中国では理想的な王位継承として古くから語り継がれ、堯から舜への継承は、その代表例とされています。"
+    ],
+    "quiz": []
+  }
+}

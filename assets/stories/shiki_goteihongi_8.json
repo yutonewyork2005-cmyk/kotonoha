@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_8",
+  "title": "史記・五帝本紀 8 四凶との対峙",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 8,
+  "series_next": "shiki_goteihongi_9",
+  "text_file": "shiki_goteihongi_8.txt",
+  "column": {
+    "trivia": [
+      "『史記』では、讙兜のほかにも、共工（きょうこう）・三苗（さんびょう）・鯀（こん）という三人の問題人物が登場します。四人はまとめて「四凶（しきょう）」と呼ばれ、舜はそれぞれに対処していくことになります。\n\n国を治める道は、一つ問題を解決しても、また新たな課題が現れる連続だったのです。"
+    ],
+    "quiz": []
+  }
+}

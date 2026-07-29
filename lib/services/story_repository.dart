@@ -24,10 +24,40 @@ class StoryRepository {
     final stories = <Story>[];
     for (final file in files) {
       final raw = await rootBundle.loadString('assets/stories/$file');
-      stories.add(Story.fromJson(jsonDecode(raw) as Map<String, dynamic>));
+      final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      final textFile = data['text_file'] as String?;
+      if (textFile != null) {
+        final text = await rootBundle.loadString('assets/stories/$textFile');
+        data['pages'] = _paginateText(text);
+      }
+      stories.add(Story.fromJson(data));
     }
     _cache = stories;
     return stories;
+  }
+
+  /// テキスト形式の収録作品を、読みやすい長さのページに区切る。
+  List<String> _paginateText(String raw) {
+    final paragraphs = raw
+        .replaceAll('\r\n', '\n')
+        .split(RegExp(r'\n\s*\n'))
+        .map((paragraph) => paragraph.trim())
+        .where((paragraph) => paragraph.isNotEmpty);
+
+    const maxPageLength = 700;
+    final pages = <String>[];
+    final buffer = StringBuffer();
+    for (final paragraph in paragraphs) {
+      final extraLength = paragraph.length + (buffer.length == 0 ? 0 : 2);
+      if (buffer.length > 0 && buffer.length + extraLength > maxPageLength) {
+        pages.add(buffer.toString());
+        buffer.clear();
+      }
+      if (buffer.length > 0) buffer.write('\n\n');
+      buffer.write(paragraph);
+    }
+    if (buffer.length > 0) pages.add(buffer.toString());
+    return pages;
   }
 
   Future<Story?> byId(String id) async {
@@ -39,8 +69,7 @@ class StoryRepository {
 
   /// ランダムに1話選ぶ。[excludeId] は除外(読んだ直後の話など)。
   Future<Story?> random({String? excludeId}) async {
-    var candidates =
-        (await loadAll()).where((s) => s.id != excludeId).toList();
+    var candidates = (await loadAll()).where((s) => s.id != excludeId).toList();
     if (candidates.isEmpty) {
       candidates = await loadAll();
     }

@@ -1,5 +1,15 @@
 {
   "stories": [
-    "sangetsuki.json"
+    "sangetsuki.json",
+    "shiki_goteihongi_1.json",
+    "shiki_goteihongi_2.json",
+    "shiki_goteihongi_3.json",
+    "shiki_goteihongi_4.json",
+    "shiki_goteihongi_5.json",
+    "shiki_goteihongi_6.json",
+    "shiki_goteihongi_7.json",
+    "shiki_goteihongi_8.json",
+    "shiki_goteihongi_9.json",
+    "shiki_goteihongi_10.json"
   ]
 }

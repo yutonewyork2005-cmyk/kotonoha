@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_1",
+  "title": "史記・五帝本紀 1 炎の穀倉",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 1,
+  "series_next": "shiki_goteihongi_2",
+  "text_file": "shiki_goteihongi_1.txt",
+  "column": {
+    "trivia": [
+      "『史記』では、舜は父たちから二度命を狙われています。一度目は、穀物倉に火を放たれる事件。本作でも描かれた場面です。\n\n二度目は、井戸を掘らせている最中に出口をふさがれ、そのまま土を入れられて生き埋めにされそうになった事件です。舜はどちらも機転を利かせて脱出したと伝えられています。"
+    ],
+    "quiz": []
+  }
+}

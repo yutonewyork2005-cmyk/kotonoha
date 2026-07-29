@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_7",
+  "title": "史記・五帝本紀 7 四門の政",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 7,
+  "series_next": "shiki_goteihongi_8",
+  "text_file": "shiki_goteihongi_7.txt",
+  "column": {
+    "trivia": [
+      "『史記』には、舜が政を行うようになると「賓于四門、四門穆穆（四門は和やかに治まった）」と記されています。これは宮殿の四つの門で人々を公平に迎え、国全体が秩序立っていたことを表す言葉です。\n\n本作では、この一文をもとに「南門・東門・西門・北門」での出来事として描いています。"
+    ],
+    "quiz": []
+  }
+}

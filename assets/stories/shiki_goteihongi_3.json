@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_3",
+  "title": "史記・五帝本紀 3 堯帝の試練",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 3,
+  "series_next": null,
+  "text_file": "shiki_goteihongi_3.txt",
+  "column": {
+    "trivia": [
+      "『史記・五帝本紀』には、堯は舜を試すためにさまざまな仕事を任せたものの、舜はどれも立派に成し遂げたと記されています。\n\n本作で描かれた「村の水争いの仲裁」は、この記述をもとにしたエピソードです。"
+    ],
+    "quiz": []
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_2",
+  "title": "史記・五帝本紀 2 堯帝の招き",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 2,
+  "series_next": "shiki_goteihongi_3",
+  "text_file": "shiki_goteihongi_2.txt",
+  "column": {
+    "trivia": [
+      "舜は農業だけでなく、漁や陶器作り、木工品作りなど、さまざまな仕事を経験していました。『史記』には、「歴山で農業をし、雷沢で漁をし、河辺で陶器を作り、寿丘で生活道具を作った」と記されています。\n\n各地で働き、人々と生活を共にした経験が、後の名君としての土台になったのかもしれません。"
+    ],
+    "quiz": []
+  }
+}

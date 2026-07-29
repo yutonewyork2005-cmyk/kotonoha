@@ -1,0 +1,18 @@
+{
+  "id": "shiki_goteihongi_5",
+  "title": "史記・五帝本紀 5 大麓の嵐",
+  "original_title": "史記 五帝本紀",
+  "author": "司馬遷（原典）",
+  "tag": "漢文",
+  "is_series": true,
+  "series_name": "史記・五帝本紀",
+  "series_num": 5,
+  "series_next": "shiki_goteihongi_6",
+  "text_file": "shiki_goteihongi_5.txt",
+  "column": {
+    "trivia": [
+      "『史記』では、「舜は大麓で烈風雷雨に遭っても道に迷わず、堯は天下を任せられる人物だと確信した」とだけ記されています。\n\n実は、この場面は史記ではわずか一文で語られているだけです。それだけでなく、舜の物語全体も簡潔に書かれており、出来事が次々とテンポよく進んでいきます。"
+    ],
+    "quiz": []
+  }
+}
