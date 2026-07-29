@@ -13,38 +13,30 @@ const _story = Story(
 );
 
 void main() {
-  testWidgets('背景イラストとタップ領域が表示される', (tester) async {
+  testWidgets('読了メッセージと各ボタンが表示される', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: FinishedScreen(story: _story)),
     );
     await tester.pumpAndSettle();
 
-    // 背景画像が読み込まれている
-    final image = tester.widget<Image>(find.byType(Image));
-    expect(
-      (image.image as AssetImage).assetName,
-      'assets/images/finished_bg.png',
-    );
-
-    // 5つのタップ領域 (Material+InkWell) が配置されている
-    expect(find.byType(InkWell), findsNWidgets(5));
+    expect(find.textContaining('読了おめでとうございます'), findsOneWidget);
+    expect(find.text('続けてもう1話読む'), findsOneWidget);
+    expect(find.text('ランダムでもう1話読む'), findsOneWidget);
+    expect(find.text('物語一覧に戻る'), findsOneWidget);
+    expect(find.text('タイトルに戻る'), findsOneWidget);
+    // コラムの無い物語ではコラムボタンは出ない。
+    expect(find.textContaining('コラムを見る'), findsNothing);
   });
 
-  testWidgets('タイトル画面に戻るタップでクラッシュしない', (tester) async {
+  testWidgets('タイトルに戻るタップでクラッシュしない', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: FinishedScreen(story: _story)),
     );
     await tester.pumpAndSettle();
 
-    // 一番左下の丸ボタン (タイトル画面に戻る) をタップ
-    final size = tester.getSize(find.byType(AspectRatio));
-    final topLeft = tester.getTopLeft(find.byType(AspectRatio));
-    await tester.tapAt(
-      topLeft + Offset(size.width * 0.31, size.height * 0.74),
-    );
+    await tester.tap(find.text('タイトルに戻る'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(FinishedScreen), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
