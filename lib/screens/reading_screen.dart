@@ -89,6 +89,8 @@ class _ReadingScreenState extends State<ReadingScreen> {
             final usableHeight = constraints.maxHeight -
                 _footerHeight -
                 _contentPadding.vertical;
+            final usableWidth =
+                constraints.maxWidth - _contentPadding.horizontal;
             final cellSize = usableHeight /
                 (VerticalTextPaginator.rowsPerColumn +
                     VerticalTextPaginator.maxHangingChars);
@@ -99,9 +101,11 @@ class _ReadingScreenState extends State<ReadingScreen> {
             // 元のページ区切り(横書き時代の目安)ごとに分割し直すと、
             // 各ページの末尾で余った分だけの画面ができ不自然な余白が
             // 生まれるため、物語全体を1本の文章としてつなげてから
-            // 組版ルール(約10行×約31字)で縦書き用に分割し直す。
+            // 実際の画面サイズに合わせて縦書き用に分割し直す。
             final screens = VerticalTextPaginator.paginate(
               text: story.pages.join('\n\n'),
+              cellSize: cellSize,
+              maxWidth: usableWidth,
             );
             final screenCount = screens.length;
             return Column(
