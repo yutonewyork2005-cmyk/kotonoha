@@ -15,18 +15,18 @@ void main() {
       expect(pages.first.columns.last.first, '「');
     });
 
-    test('31文字を超える行は次の列に折り返す', () {
-      final text = 'あ' * 40; // 字下げ込みで41文字 -> 31 + 10
+    test('1列あたりの文字数を超える行は次の列に折り返す', () {
+      final text = 'あ' * (VerticalTextPaginator.rowsPerColumn + 9);
       final pages = VerticalTextPaginator.paginate(text: text);
       expect(pages.first.columns.length, 2);
-      expect(pages.first.columns.last.length,
-          VerticalTextPaginator.rowsPerColumn);
+      expect(
+          pages.first.columns.last.length, VerticalTextPaginator.rowsPerColumn);
       expect(pages.first.columns.first.length, 10);
     });
 
     test('句読点は行頭に来ず前の列末尾にぶら下がる', () {
-      // 字下げ込みでちょうど31文字目の次が「。」になるようにする。
-      final text = '${'あ' * 30}。まだ続く';
+      // 字下げ込みでちょうど列末の次が「。」になるようにする。
+      final text = '${'あ' * (VerticalTextPaginator.rowsPerColumn - 1)}。まだ続く';
       final pages = VerticalTextPaginator.paginate(text: text);
       final firstColumn = pages.first.columns.last;
       expect(firstColumn.length, VerticalTextPaginator.rowsPerColumn + 1);
@@ -36,12 +36,28 @@ void main() {
     });
 
     test('10列を超えると次のページに分かれる', () {
-      final text = List.generate(12, (i) => 'あいう').join('\n');
+      final text = 'あ' * (VerticalTextPaginator.rowsPerColumn * 12);
       final pages = VerticalTextPaginator.paginate(text: text);
       expect(pages.length, 2);
-      final contentCols =
-          pages.first.columns.where((c) => c.isNotEmpty).length;
+      final contentCols = pages.first.columns.where((c) => c.isNotEmpty).length;
       expect(contentCols, VerticalTextPaginator.columnsPerPage);
+    });
+
+    test('段落内の改行は連続した本文として組まれる', () {
+      final pages = VerticalTextPaginator.paginate(text: 'あ\nい');
+      expect(pages.first.columns.last, ['　', 'あ', 'い']);
+    });
+
+    test('ページ分割しても本文文字は欠けない', () {
+      const text = '李徴はエリートー。\nまだ続く。\n\n「虎になる」';
+      final pages = VerticalTextPaginator.paginate(text: text);
+      final restored = pages
+          .expand((page) => page.columns.reversed)
+          .expand((column) => column)
+          .where((ch) => ch != '　')
+          .join();
+
+      expect(restored, '李徴はエリートー。まだ続く。「虎になる」');
     });
 
     test('空行は列間の余白として扱われページ頭には残らない', () {
@@ -53,7 +69,7 @@ void main() {
     });
   });
 
-  testWidgets('VerticalPageView は各文字を表示し、長音記号は回転する', (tester) async {
+  testWidgets('VerticalPageView は各文字を表示し、長音記号は縦線で表示する', (tester) async {
     final pages = VerticalTextPaginator.paginate(text: 'コーヒー、どうぞ。');
     await tester.pumpWidget(
       MaterialApp(
@@ -61,9 +77,10 @@ void main() {
       ),
     );
 
-    for (final ch in 'コーヒーどうぞ、。'.split('')) {
+    for (final ch in 'コヒどうぞ、。'.split('')) {
       expect(find.text(ch), findsWidgets);
     }
+    expect(find.byKey(const ValueKey('vertical-bar-ー')), findsNWidgets(2));
     expect(find.byType(Transform), findsWidgets);
     expect(tester.takeException(), isNull);
   });

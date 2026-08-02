@@ -22,7 +22,7 @@ class VerticalTextPaginator {
   const VerticalTextPaginator._();
 
   /// 1列(縦1行)あたりの文字数の目安。
-  static const rowsPerColumn = 31;
+  static const rowsPerColumn = 30;
 
   /// 行頭禁則のぶら下げで1列に追加してよい文字数。
   static const maxHangingChars = 2;
@@ -32,26 +32,61 @@ class VerticalTextPaginator {
 
   /// 字下げしない行頭文字(会話文・引用など)。
   static const _openingBrackets = {
-    '「', '『', '（', '(', '【', '〈', '《', '[',
+    '「',
+    '『',
+    '（',
+    '(',
+    '【',
+    '〈',
+    '《',
+    '[',
   };
 
   /// 行頭に来ると不自然な文字(行頭禁則)。前の列末尾にぶら下げる。
   static const _lineHeadForbidden = {
-    '、', '。', '，', '．', ',', '.',
-    '」', '』', '）', ')', '】', '〉', '》', ']',
-    '？', '?', '！', '!', '…', '‥',
+    '、',
+    '。',
+    '，',
+    '．',
+    ',',
+    '.',
+    '」',
+    '』',
+    '）',
+    ')',
+    '】',
+    '〉',
+    '》',
+    ']',
+    '？',
+    '?',
+    '！',
+    '!',
+    '…',
+    '‥',
   };
 
-  static List<VerticalPage> paginate({required String text}) {
-    // 段落(改行区切り)ごとに、字下げ→31文字ずつ列に折り返し。
+  static List<VerticalPage> paginate({
+    required String text,
+    int columnsPerPage = VerticalTextPaginator.columnsPerPage,
+  }) {
+    assert(columnsPerPage > 0);
+    // 空行で区切られた段落ごとに、字下げして列へ折り返す。
+    // 段落内の改行は入力時の行送りなので、本文を連続して組む。
     final allColumns = <List<String>>[];
-    for (final line in text.split('\n')) {
-      final trimmed = line.trim();
-      if (trimmed.isEmpty) {
-        allColumns.add(const []);
-        continue;
-      }
-      final chars = trimmed.runes.map(String.fromCharCode).toList();
+    final paragraphs = text.replaceAll('\r\n', '\n').split(RegExp(r'\n\s*\n+'));
+    var hasPreviousParagraph = false;
+    for (final rawParagraph in paragraphs) {
+      final paragraph = rawParagraph
+          .split('\n')
+          .map((line) => line.trim())
+          .where((line) => line.isNotEmpty)
+          .join();
+      if (paragraph.isEmpty) continue;
+      if (hasPreviousParagraph) allColumns.add(const []);
+      hasPreviousParagraph = true;
+
+      final chars = paragraph.runes.map(String.fromCharCode).toList();
       if (!_openingBrackets.contains(chars.first) && chars.first != '　') {
         chars.insert(0, '　');
       }
@@ -75,19 +110,17 @@ class VerticalTextPaginator {
     // 残さない。
     final pages = <VerticalPage>[];
     var current = <List<String>>[];
-    var contentCount = 0;
     for (final col in allColumns) {
       if (col.isEmpty && current.isEmpty) continue;
-      if (col.isNotEmpty && contentCount >= columnsPerPage) {
+      if (current.isNotEmpty && current.length >= columnsPerPage) {
         while (current.isNotEmpty && current.last.isEmpty) {
           current.removeLast();
         }
         pages.add(VerticalPage(current.reversed.toList()));
         current = [];
-        contentCount = 0;
       }
+      if (col.isEmpty && current.isEmpty) continue;
       current.add(col);
-      if (col.isNotEmpty) contentCount++;
     }
     while (current.isNotEmpty && current.last.isEmpty) {
       current.removeLast();
@@ -113,15 +146,28 @@ class VerticalPageView extends StatelessWidget {
   final TextStyle? style;
   final double cellSize;
 
+  static const _verticalBars = {
+    'ー',
+    'ｰ',
+    '―',
+    '—',
+    '−',
+    '-',
+  };
+
   static const _rotateChars = {
-    'ー', '−', '-', '~', '〜', // 長音・波ダッシュ
+    '~', '〜', '～', // 波ダッシュ
     '…', '‥', // 三点リーダー・二点リーダー
     '(', ')', '（', '）', // 半角・全角括弧
     '「', '」', '『', '』', '【', '】', '〈', '〉', '《', '》', '[', ']',
   };
 
   // 句読点は縦書きではセルの右上寄りに置くのが自然。
-  static const _leadingPunctuation = {'、', '。', ',', '.'};
+  static const _leadingPunctuation = {'、', '。', '，', '．', ',', '.'};
+
+  static const _openingBrackets = {'「', '『', '（', '【', '〈', '《', '['};
+
+  static const _closingBrackets = {'」', '』', '）', '】', '〉', '》', ']'};
 
   @override
   Widget build(BuildContext context) {
@@ -149,19 +195,54 @@ class VerticalPageView extends StatelessWidget {
   }
 
   Widget _charCell(String ch) {
-    Widget text = Text(ch, style: style);
-    if (_rotateChars.contains(ch)) {
-      text = Transform.rotate(angle: math.pi / 2, child: text);
+    final text = Text(
+      ch,
+      style: style,
+      textHeightBehavior: const TextHeightBehavior(
+        applyHeightToFirstAscent: false,
+        applyHeightToLastDescent: false,
+      ),
+    );
+    if (_verticalBars.contains(ch)) {
+      return Center(
+        child: Container(
+          key: ValueKey('vertical-bar-$ch'),
+          width: math.max(1, cellSize * 0.075),
+          height: cellSize * 0.48,
+          decoration: BoxDecoration(
+            color: style?.color ?? Colors.black87,
+            borderRadius: BorderRadius.circular(cellSize),
+          ),
+        ),
+      );
     }
     if (_leadingPunctuation.contains(ch)) {
-      // 、。はフォント内で左下寄りに描画されるため、Alignだけでは
-      // 効果が弱い。右上へ確実にずらすため中央配置後に平行移動する。
+      // 、。は縦書きでセルの右上に置く。
       return Center(
         child: Transform.translate(
           offset: Offset(cellSize * 0.3, -cellSize * 0.3),
           child: text,
         ),
       );
+    }
+    if (_openingBrackets.contains(ch)) {
+      return Center(
+        child: Transform.translate(
+          offset: Offset(cellSize * 0.24, -cellSize * 0.24),
+          child: Transform.rotate(angle: math.pi / 2, child: text),
+        ),
+      );
+    }
+    if (_closingBrackets.contains(ch)) {
+      return Center(
+        child: Transform.translate(
+          offset: Offset(-cellSize * 0.24, cellSize * 0.24),
+          child: Transform.rotate(angle: math.pi / 2, child: text),
+        ),
+      );
+    }
+    if (_rotateChars.contains(ch)) {
+      return Center(child: Transform.rotate(angle: math.pi / 2, child: text));
     }
     return Center(child: text);
   }

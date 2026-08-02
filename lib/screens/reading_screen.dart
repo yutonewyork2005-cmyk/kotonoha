@@ -93,15 +93,29 @@ class _ReadingScreenState extends State<ReadingScreen> {
                 (VerticalTextPaginator.rowsPerColumn +
                     VerticalTextPaginator.maxHangingChars);
             final textStyle = TextStyle(
-              fontSize: cellSize * 0.9,
+              // Keep enough room around each glyph so punctuation and tall
+              // Japanese characters do not look clipped on small screens.
+              fontSize: cellSize * 0.78,
               fontFamily: 'serif',
             );
+            // Use the available width while keeping the font size determined
+            // by the viewport height. This avoids a wide unused area on phones.
+            final columnsForViewport =
+                ((constraints.maxWidth - _contentPadding.horizontal) / cellSize)
+                    .floor();
+            final columnsPerPage =
+                columnsForViewport < VerticalTextPaginator.columnsPerPage
+                    ? VerticalTextPaginator.columnsPerPage
+                    : columnsForViewport > 16
+                        ? 16
+                        : columnsForViewport;
             // 元のページ区切り(横書き時代の目安)ごとに分割し直すと、
             // 各ページの末尾で余った分だけの画面ができ不自然な余白が
             // 生まれるため、物語全体を1本の文章としてつなげてから
             // 組版ルール(約10行×約31字)で縦書き用に分割し直す。
             final screens = VerticalTextPaginator.paginate(
               text: story.pages.join('\n\n'),
+              columnsPerPage: columnsPerPage,
             );
             final screenCount = screens.length;
             return Column(
@@ -148,10 +162,13 @@ class _ReadingScreenState extends State<ReadingScreen> {
                       }
                       return Padding(
                         padding: _contentPadding,
-                        child: VerticalPageView(
-                          page: screens[i],
-                          style: textStyle,
-                          cellSize: cellSize,
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: VerticalPageView(
+                            page: screens[i],
+                            style: textStyle,
+                            cellSize: cellSize,
+                          ),
                         ),
                       );
                     },
