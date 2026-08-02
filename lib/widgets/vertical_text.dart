@@ -15,9 +15,15 @@ class VerticalPage {
 /// 物語本文を、本の組版に近いルールで縦書きページに分割する。
 ///
 /// - 1列(縦1行)は約 [rowsPerColumn] 文字
-/// - 1ページは約 [columnsPerPage] 列
+/// - 1ページは画面の横幅にちょうど収まるところまで(目安 [columnsPerPage] 列分)
 /// - 段落頭は全角空白で字下げ(かぎ括弧などで始まる行を除く)
 /// - 句読点や閉じ括弧が行頭に来る場合は前の行末にぶら下げる(行頭禁則)
+///
+/// ページの区切りは列(行)の「本数」ではなく実際の「幅」で決める。段落
+/// 区切りの余白列はページによって数がばらつくため、本数だけで区切ると
+/// 余白列が少ないページほど実際に使う幅が狭くなり、右寄せの結果として
+/// 左側に不自然な空白が生まれてしまう。[cellSize]・[maxWidth] を渡して
+/// 画面の横幅を実際に使い切るまで列を詰める。
 class VerticalTextPaginator {
   const VerticalTextPaginator._();
 
@@ -27,7 +33,7 @@ class VerticalTextPaginator {
   /// 行頭禁則のぶら下げで1列に追加してよい文字数。
   static const maxHangingChars = 2;
 
-  /// 1ページあたりの列数の目安。
+  /// 1ページあたりの列数の目安(段落区切りが少なめの場合の基準)。
   static const columnsPerPage = 10;
 
   /// 字下げしない行頭文字(会話文・引用など)。
@@ -68,9 +74,9 @@ class VerticalTextPaginator {
 
   static List<VerticalPage> paginate({
     required String text,
-    int columnsPerPage = VerticalTextPaginator.columnsPerPage,
+    required double cellSize,
+    required double maxWidth,
   }) {
-    assert(columnsPerPage > 0);
     // 空行で区切られた段落ごとに、字下げして列へ折り返す。
     // 段落内の改行は入力時の行送りなので、本文を連続して組む。
     final allColumns = <List<String>>[];
@@ -106,21 +112,29 @@ class VerticalTextPaginator {
       }
     }
 
-    // 約10列ごとにページへまとめる。空白列(段落区切り)はページ頭・末尾に
-    // 残さない。
+    // 画面の横幅にちょうど収まるところまで列を詰めてページを区切る。
+    // 段落区切りの余白列(幅が狭い)はページによって数がばらつくため、
+    // 本数ではなく実際の幅の合計で判定することで、どのページも横幅を
+    // きちんと使い切るようにする。
+    final columnWidth = cellSize * VerticalPageView.columnPitchFactor;
+    final blankWidth = cellSize * VerticalPageView.blankColumnFactor;
+
     final pages = <VerticalPage>[];
     var current = <List<String>>[];
+    var widthUsed = 0.0;
     for (final col in allColumns) {
       if (col.isEmpty && current.isEmpty) continue;
-      if (current.isNotEmpty && current.length >= columnsPerPage) {
+      final w = col.isEmpty ? blankWidth : columnWidth;
+      if (col.isNotEmpty && current.isNotEmpty && widthUsed + w > maxWidth) {
         while (current.isNotEmpty && current.last.isEmpty) {
           current.removeLast();
         }
         pages.add(VerticalPage(current.reversed.toList()));
         current = [];
+        widthUsed = 0;
       }
-      if (col.isEmpty && current.isEmpty) continue;
       current.add(col);
+      widthUsed += w;
     }
     while (current.isNotEmpty && current.last.isEmpty) {
       current.removeLast();
@@ -146,14 +160,13 @@ class VerticalPageView extends StatelessWidget {
   final TextStyle? style;
   final double cellSize;
 
-  static const _verticalBars = {
-    'ー',
-    'ｰ',
-    '―',
-    '—',
-    '−',
-    '-',
-  };
+  /// 1列が占める幅(セル幅に対する倍率)。差分は行間として左右に付く。
+  static const columnPitchFactor = 1.3;
+
+  /// 空白列(段落区切り)の幅(セル幅に対する倍率)。
+  static const blankColumnFactor = 0.6;
+
+  static const _verticalBars = {'ー', 'ｰ', '―', '—', '−', '-'};
 
   static const _rotateChars = {
     '~', '〜', '～', // 波ダッシュ
@@ -171,28 +184,41 @@ class VerticalPageView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (final col in page.columns)
-          if (col.isEmpty)
-            SizedBox(width: cellSize * 0.6)
-          else
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final ch in col)
-                  SizedBox(
-                    width: cellSize,
-                    height: cellSize,
-                    child: _charCell(ch),
-                  ),
-              ],
-            ),
-      ],
+    // 縦書きの読み始めは右上なので、列が少ないページでも
+    // 右端に寄せて表示する(左寄せだと読み始めに空白ができる)。
+    return Align(
+      alignment: Alignment.topRight,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final col in page.columns)
+            if (col.isEmpty)
+              SizedBox(width: cellSize * blankColumnFactor)
+            else
+              Container(
+                width: cellSize * columnPitchFactor,
+                alignment: Alignment.topCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final ch in col)
+                      SizedBox(
+                        width: cellSize,
+                        height: cellSize,
+                        child: _charCell(ch),
+                      ),
+                  ],
+                ),
+              ),
+        ],
+      ),
     );
   }
+
+  // 三点リーダー等は字形が行ボックスの下寄りにあり、90度回転すると
+  // その分だけ左にずれるため、回転後に右へ戻して列の中央に合わせる。
+  static const _rotateRecenterChars = {'…', '‥'};
 
   Widget _charCell(String ch) {
     final text = Text(
@@ -217,7 +243,8 @@ class VerticalPageView extends StatelessWidget {
       );
     }
     if (_leadingPunctuation.contains(ch)) {
-      // 、。は縦書きでセルの右上に置く。
+      // 、。はフォント内で左下寄りに描画されるため、Alignだけでは
+      // 効果が弱い。右上へ確実にずらすため中央配置後に平行移動する。
       return Center(
         child: Transform.translate(
           offset: Offset(cellSize * 0.3, -cellSize * 0.3),
@@ -242,7 +269,14 @@ class VerticalPageView extends StatelessWidget {
       );
     }
     if (_rotateChars.contains(ch)) {
-      return Center(child: Transform.rotate(angle: math.pi / 2, child: text));
+      var rotated = Transform.rotate(angle: math.pi / 2, child: text);
+      if (_rotateRecenterChars.contains(ch)) {
+        rotated = Transform.translate(
+          offset: Offset(cellSize * 0.16, 0),
+          child: rotated,
+        );
+      }
+      return Center(child: rotated);
     }
     return Center(child: text);
   }

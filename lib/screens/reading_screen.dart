@@ -84,38 +84,28 @@ class _ReadingScreenState extends State<ReadingScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            // 1列31文字+ぶら下げ2文字分が画面の高さに収まるよう、
+            // 1列30文字+ぶら下げ2文字分が画面の高さに収まるよう、
             // セルの大きさを画面サイズから決める(全ページで一定)。
             final usableHeight = constraints.maxHeight -
                 _footerHeight -
                 _contentPadding.vertical;
+            final usableWidth =
+                constraints.maxWidth - _contentPadding.horizontal;
             final cellSize = usableHeight /
                 (VerticalTextPaginator.rowsPerColumn +
                     VerticalTextPaginator.maxHangingChars);
             final textStyle = TextStyle(
-              // Keep enough room around each glyph so punctuation and tall
-              // Japanese characters do not look clipped on small screens.
               fontSize: cellSize * 0.78,
               fontFamily: 'serif',
             );
-            // Use the available width while keeping the font size determined
-            // by the viewport height. This avoids a wide unused area on phones.
-            final columnsForViewport =
-                ((constraints.maxWidth - _contentPadding.horizontal) / cellSize)
-                    .floor();
-            final columnsPerPage =
-                columnsForViewport < VerticalTextPaginator.columnsPerPage
-                    ? VerticalTextPaginator.columnsPerPage
-                    : columnsForViewport > 16
-                        ? 16
-                        : columnsForViewport;
             // 元のページ区切り(横書き時代の目安)ごとに分割し直すと、
             // 各ページの末尾で余った分だけの画面ができ不自然な余白が
             // 生まれるため、物語全体を1本の文章としてつなげてから
-            // 組版ルール(約10行×約31字)で縦書き用に分割し直す。
+            // 実際の画面サイズに合わせて縦書き用に分割し直す。
             final screens = VerticalTextPaginator.paginate(
               text: story.pages.join('\n\n'),
-              columnsPerPage: columnsPerPage,
+              cellSize: cellSize,
+              maxWidth: usableWidth,
             );
             final screenCount = screens.length;
             return Column(
@@ -162,13 +152,10 @@ class _ReadingScreenState extends State<ReadingScreen> {
                       }
                       return Padding(
                         padding: _contentPadding,
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          child: VerticalPageView(
-                            page: screens[i],
-                            style: textStyle,
-                            cellSize: cellSize,
-                          ),
+                        child: VerticalPageView(
+                          page: screens[i],
+                          style: textStyle,
+                          cellSize: cellSize,
                         ),
                       );
                     },
