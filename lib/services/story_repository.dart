@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/story.dart';
@@ -23,14 +24,19 @@ class StoryRepository {
         .cast<String>();
     final stories = <Story>[];
     for (final file in files) {
-      final raw = await rootBundle.loadString('assets/stories/$file');
-      final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      final textFile = data['text_file'] as String?;
-      if (textFile != null) {
-        final text = await rootBundle.loadString('assets/stories/$textFile');
-        data['pages'] = _paginateText(text);
+      try {
+        final raw = await rootBundle.loadString('assets/stories/$file');
+        final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+        final textFile = data['text_file'] as String?;
+        if (textFile != null) {
+          final text = await rootBundle.loadString('assets/stories/$textFile');
+          data['pages'] = _paginateText(text);
+        }
+        stories.add(Story.fromJson(data));
+      } catch (error) {
+        // 1作品のファイル不備で、作品一覧全体が空にならないようにする。
+        debugPrint('Skipping unreadable story asset $file: $error');
       }
-      stories.add(Story.fromJson(data));
     }
     _cache = stories;
     return stories;
