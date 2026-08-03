@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import '../models/rewards.dart';
@@ -20,8 +21,44 @@ class TitleScreen extends StatefulWidget {
 }
 
 class _TitleScreenState extends State<TitleScreen> {
+  static final _titleBgm = AssetSource('audio/MusMus-BGM-162.mp3');
+
+  late final AudioPlayer _bgmPlayer;
+  bool _bgmHasStarted = false;
   String? _librarianMessage;
   bool _creatingProfile = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _bgmPlayer = AudioPlayer();
+    _playBgm();
+  }
+
+  Future<void> _playBgm() async {
+    try {
+      await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+      await _bgmPlayer.setVolume(0.35);
+      if (_bgmHasStarted) {
+        await _bgmPlayer.resume();
+      } else {
+        await _bgmPlayer.play(_titleBgm);
+        _bgmHasStarted = true;
+      }
+    } catch (_) {
+      // BGM を再生できない環境でも、画面の操作は継続できるようにする。
+    }
+  }
+
+  Future<T?> _pushFromTitle<T>(Widget page) async {
+    await _bgmPlayer.pause();
+    if (!mounted) return null;
+    final result = await Navigator.of(context).push<T>(
+      MaterialPageRoute(builder: (_) => page),
+    );
+    if (mounted) await _playBgm();
+    return result;
+  }
 
   Future<void> _onLibrarianTap(UserProfile profile) async {
     final message = await LibrarianService.instance.pickMessage(
@@ -40,9 +77,7 @@ class _TitleScreenState extends State<TitleScreen> {
       );
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ReadingScreen(story: story)),
-    );
+    await _pushFromTitle(ReadingScreen(story: story));
   }
 
   /// 旧アカウント等でプロフィールが無い場合に作成する。
@@ -54,6 +89,12 @@ class _TitleScreenState extends State<TitleScreen> {
       UserService.instance
           .createProfile(uid: user.uid, email: user.email ?? '');
     }
+  }
+
+  @override
+  void dispose() {
+    _bgmPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -153,10 +194,8 @@ class _TitleScreenState extends State<TitleScreen> {
                     FilledButton.icon(
                       icon: const Icon(Icons.menu_book),
                       label: const Text('本をえらぶ'),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const StoryListScreen(),
-                        ),
+                      onPressed: () => _pushFromTitle(
+                        const StoryListScreen(),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -172,10 +211,8 @@ class _TitleScreenState extends State<TitleScreen> {
                         'きせかえ',
                         style: TextStyle(color: textColor),
                       ),
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const CustomizeScreen(),
-                        ),
+                      onPressed: () => _pushFromTitle(
+                        const CustomizeScreen(),
                       ),
                     ),
                     const SizedBox(height: 24),

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../models/story.dart';
+import 'story_text.dart';
 
 /// assets/stories 配下の物語 JSON を読み込むリポジトリ。
 /// 物語の追加方法は README.md を参照。
@@ -28,10 +29,16 @@ class StoryRepository {
         final raw = await rootBundle.loadString('assets/stories/$file');
         final data = Map<String, dynamic>.from(jsonDecode(raw) as Map);
         final textFile = data['text_file'] as String?;
+        final String sourceText;
         if (textFile != null) {
-          final text = await rootBundle.loadString('assets/stories/$textFile');
-          data['pages'] = _paginateText(text);
+          sourceText = await rootBundle.loadString('assets/stories/$textFile');
+        } else {
+          final pages =
+              (data['pages'] as List<dynamic>? ?? const []).whereType<String>();
+          sourceText = StoryText.fromPages(pages);
         }
+        final text = StoryText.normalize(sourceText);
+        data['pages'] = text.isEmpty ? const <String>[] : [text];
         stories.add(Story.fromJson(data));
       } catch (error) {
         // 1作品のファイル不備で、作品一覧全体が空にならないようにする。
@@ -40,30 +47,6 @@ class StoryRepository {
     }
     _cache = stories;
     return stories;
-  }
-
-  /// テキスト形式の収録作品を、読みやすい長さのページに区切る。
-  List<String> _paginateText(String raw) {
-    final paragraphs = raw
-        .replaceAll('\r\n', '\n')
-        .split(RegExp(r'\n\s*\n'))
-        .map((paragraph) => paragraph.trim())
-        .where((paragraph) => paragraph.isNotEmpty);
-
-    const maxPageLength = 700;
-    final pages = <String>[];
-    final buffer = StringBuffer();
-    for (final paragraph in paragraphs) {
-      final extraLength = paragraph.length + (buffer.length == 0 ? 0 : 2);
-      if (buffer.length > 0 && buffer.length + extraLength > maxPageLength) {
-        pages.add(buffer.toString());
-        buffer.clear();
-      }
-      if (buffer.length > 0) buffer.write('\n\n');
-      buffer.write(paragraph);
-    }
-    if (buffer.length > 0) pages.add(buffer.toString());
-    return pages;
   }
 
   Future<Story?> byId(String id) async {

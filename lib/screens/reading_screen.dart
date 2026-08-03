@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/rewards.dart';
 import '../models/story.dart';
 import '../services/auth_service.dart';
+import '../services/story_text.dart';
 import '../services/user_service.dart';
 import '../widgets/vertical_text.dart';
 import 'finished_screen.dart';
@@ -103,7 +104,7 @@ class _ReadingScreenState extends State<ReadingScreen> {
             // 生まれるため、物語全体を1本の文章としてつなげてから
             // 実際の画面サイズに合わせて縦書き用に分割し直す。
             final screens = VerticalTextPaginator.paginate(
-              text: story.pages.join('\n\n'),
+              text: StoryText.fromPages(story.pages),
               cellSize: cellSize,
               maxWidth: usableWidth,
             );
