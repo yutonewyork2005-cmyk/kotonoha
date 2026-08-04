@@ -6,7 +6,7 @@ tag: 漢文
 is_series: true
 series_name: 韓非子
 series_num: 3
-series_next:
+series_next: kanpisi_4
 
 #PAGES
 春の柔らかな風が、秦の宮殿の庭を吹き抜けていた。
