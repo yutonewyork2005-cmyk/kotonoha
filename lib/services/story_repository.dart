@@ -57,10 +57,27 @@ class StoryRepository {
   }
 
   /// ランダムに1話選ぶ。[excludeId] は除外(読んだ直後の話など)。
-  Future<Story?> random({String? excludeId}) async {
-    var candidates = (await loadAll()).where((s) => s.id != excludeId).toList();
+  /// [includeSeriesContinuations] が false の場合、連作の第2話以降は候補にしない。
+  Future<Story?> random({
+    String? excludeId,
+    bool includeSeriesContinuations = true,
+    String? excludedSeriesName,
+    String? allowedStoryIdInExcludedSeries,
+  }) async {
+    final stories = await loadAll();
+    final allowed = stories.where((story) {
+      if (!includeSeriesContinuations && story.isSeries) {
+        if ((story.seriesNum ?? 1) > 1) return false;
+      }
+      if (excludedSeriesName != null &&
+          story.seriesName == excludedSeriesName) {
+        return story.id == allowedStoryIdInExcludedSeries;
+      }
+      return true;
+    }).toList();
+    var candidates = allowed.where((story) => story.id != excludeId).toList();
     if (candidates.isEmpty) {
-      candidates = await loadAll();
+      candidates = allowed;
     }
     if (candidates.isEmpty) return null;
     return candidates[_random.nextInt(candidates.length)];

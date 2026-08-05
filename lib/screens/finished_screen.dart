@@ -37,7 +37,11 @@ class FinishedScreen extends StatelessWidget {
   }
 
   Future<void> _readRandom(BuildContext context) async {
-    final next = await StoryRepository.instance.random(excludeId: story.id);
+    final next = await StoryRepository.instance.random(
+      excludeId: story.id,
+      excludedSeriesName: story.isSeries ? story.seriesName : null,
+      allowedStoryIdInExcludedSeries: story.seriesNextId,
+    );
     if (!context.mounted) return;
     if (next == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -139,8 +143,7 @@ class FinishedScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: () {
-                    Navigator.of(context)
-                        .popUntil((route) => route.isFirst);
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const StoryListScreen(),
@@ -151,8 +154,8 @@ class FinishedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () => Navigator.of(context)
-                      .popUntil((route) => route.isFirst),
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
                   child: const Text('タイトルに戻る'),
                 ),
               ],

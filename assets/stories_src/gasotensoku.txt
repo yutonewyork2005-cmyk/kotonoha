@@ -1,4 +1,4 @@
-id: gyohunori
+id: gasotensoku
 title: 画蛇添足　―イラストチャレンジ！―
 original_title: 画蛇添足
 author: 劉向

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
@@ -51,7 +53,8 @@ class _TitleScreenState extends State<TitleScreen> {
   }
 
   Future<T?> _pushFromTitle<T>(Widget page) async {
-    await _bgmPlayer.pause();
+    // 音声の停止が端末側で応答しなくても、画面遷移を止めない。
+    unawaited(_bgmPlayer.pause().catchError((_) {}));
     if (!mounted) return null;
     final result = await Navigator.of(context).push<T>(
       MaterialPageRoute(builder: (_) => page),
@@ -69,7 +72,9 @@ class _TitleScreenState extends State<TitleScreen> {
   }
 
   Future<void> _readRandom() async {
-    final story = await StoryRepository.instance.random();
+    final story = await StoryRepository.instance.random(
+      includeSeriesContinuations: false,
+    );
     if (!mounted) return;
     if (story == null) {
       ScaffoldMessenger.of(context).showSnackBar(
