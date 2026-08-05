@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:4
-series_next:gingi_05
+series_next:gengi_05
 
 #PAGES
 源氏は夕顔との時間を満喫するため、人目を避けて古びた屋敷へ隠れていた。

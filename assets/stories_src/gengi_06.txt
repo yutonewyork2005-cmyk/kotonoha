@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:6
-series_next:gingi_07
+series_next:gengi_07
 
 #PAGES
 夕顔を失ってからというもの、光源氏はずっと引きずっていた。

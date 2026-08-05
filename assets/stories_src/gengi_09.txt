@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:9
-series_next:gingi_10
+series_next:gengi_10
 
 #PAGES
 時代が変わって、源氏は出世してしまった。普通なら「やった！昇進！」となるところだが、源氏の場合はそうでもない。身分が上がったせいで、昔みたいに気軽にあちこちの女性の家へ遊びに行くこともできなくなった。

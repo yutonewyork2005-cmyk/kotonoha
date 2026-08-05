@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:3
-series_next:gingi_04
+series_next:gengi_04
 
 #PAGES
 「人生って、こんなにメンタル削られることある？」

@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:11
-series_next:gingi_12
+series_next:gengi_12
 
 #PAGES
 源氏は昔から、自分で始めた恋愛に自分で悩むタイプだった。

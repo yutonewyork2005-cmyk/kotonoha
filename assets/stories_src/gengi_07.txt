@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:7
-series_next:gingi_08
+series_next:gengi_08
 
 #PAGES
 秋のある日、朱雀院で超豪華なイベントが開催されることになった。

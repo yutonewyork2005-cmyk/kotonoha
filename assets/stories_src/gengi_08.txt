@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:8
-series_next:gingi_09
+series_next:gengi_09
 
 #PAGES
 二月二十日すぎ。宮中では、紫宸殿で盛大な「桜の宴」が開催されていた。

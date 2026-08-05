@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:2
-series_next:gingi_03
+series_next:gengi_03
 
 #PAGES
 平安時代にも「イケメンすぎて困る男」がいた。その名は光源氏。

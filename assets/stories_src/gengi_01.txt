@@ -6,7 +6,7 @@ tag:古文
 is_series:true
 series_name:源氏物語
 series_num:1
-series_next:gingi_02
+series_next:gengi_02
 
 #PAGES
 昔々、とある天皇の時代のお話。
