@@ -1,6 +1,6 @@
 /// 物語本文を、端末サイズに応じた共通の縦書き組版へ渡すための整形処理。
 ///
-/// JSON の `pages`、外部 `.txt`、stories_src から変換した JSON のいずれも
+/// JSON の `pages` と、JSON から参照される外部 `.txt` のいずれも
 /// ここで同じ段落形式にそろえる。画面上のページ分割は行わず、
 /// VerticalTextPaginator が端末の表示領域に合わせて決定する。
 class StoryText {
